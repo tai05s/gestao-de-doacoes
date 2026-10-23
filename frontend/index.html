@@ -1,0 +1,221 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gestão de Doações</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="vendor/chart.umd.js"></script>
+</head><body>
+<header><div class="header-row">
+<div><h1>Gestão de Doações</h1>
+<div class="sub" id="hdrSub">Controle de arrecadações de roupas, alimentos e higiene</div></div>
+<div class="btn-group">
+<button class="hdr-btn" id="btnCsv">Exportar CSV</button>
+<button class="hdr-btn ghost" id="btnWipe">Limpar dados</button>
+</div></div></header>
+
+<nav class="tabs">
+<button class="tab-btn active" data-tab="t1">Inserir arrecadação</button>
+<button class="tab-btn" data-tab="t2">Dar baixa ou excluir</button>
+<button class="tab-btn" data-tab="t3">Indicadores</button>
+</nav>
+
+<main>
+
+<!-- ============ TAB 1 ============ -->
+<section class="tab-panel active" id="t1">
+  <div class="kpis">
+    <div class="kpi"><div class="k" id="k1">0</div><div class="l">Itens em estoque</div></div>
+    <div class="kpi green"><div class="k" id="k2">0</div><div class="l">Dentro da validade</div></div>
+    <div class="kpi yellow"><div class="k" id="k3">0</div><div class="l">Vencendo em 30 dias</div></div>
+    <div class="kpi red"><div class="k" id="k4">0</div><div class="l">Vencidos</div></div>
+  </div>
+
+  <div class="col-section">
+    <div class="col-header" data-target="b-add"><div><h2>Nova arrecadação</h2></div>
+      <span class="collapse-toggle"><span class="col-state">Ocultar</span>
+      <span class="collapse-icon">&#9660;</span></span></div>
+    <div class="col-body" id="b-add">
+      <div class="add-bar">
+        <button class="add-btn" id="btnAdd">Nova arrecadação</button>
+        <span class="add-hint">Informe tipo, quantidade e data. O item entra na tabela e fica salvo para todos os usuários.</span>
+      </div>
+      <p class="note"><strong>Como funciona:</strong> escolha <strong>Alimentos</strong> para informar a data de validade (a tabela mostra verde, amarelo ou vermelho conforme o vencimento) ou <strong>Roupas</strong> para escolher o tamanho.</p>
+    </div>
+  </div>
+
+  <div class="col-section">
+    <div class="col-header" data-target="b-t1"><div><h2>Arrecadações registradas</h2></div>
+      <span class="collapse-toggle"><span class="col-state">Ocultar</span>
+      <span class="collapse-icon">&#9660;</span></span></div>
+    <div class="col-body" id="b-t1">
+      <div class="filter-bar">
+        <span class="f-lab">Tipo</span>
+        <select class="f-sel" id="f1Tipo"><option value="all">Todos</option>
+          <option>Alimentos</option><option>Roupas</option><option>Higiene</option></select>
+        <span class="f-lab">Validade</span>
+        <select class="f-sel" id="f1Val"><option value="all">Todas</option>
+          <option value="ok">Dentro da validade</option>
+          <option value="soon">Vencendo em 30 dias</option>
+          <option value="exp">Vencido</option></select>
+        <span class="f-lab">Buscar</span>
+        <input class="f-inp" id="f1Busca" placeholder="item, tamanho, observação...">
+        <button class="f-clear" id="f1Clear">Limpar filtros</button>
+      </div>
+      <div class="tbl-scroll"><table class="dt" id="tbl1"><thead><tr>
+        <th data-col="0">Item</th><th data-col="1">Tipo</th><th data-col="2" class="c">Tamanho</th>
+        <th data-col="3" class="r">Quantidade</th><th data-col="4" class="c">Data</th>
+        <th data-col="5" class="c">Validade</th><th data-col="6">Situação</th>
+      </tr></thead><tbody></tbody>
+      <tfoot><tr><td>Total</td><td colspan="2" class="c" id="ft1n">&mdash;</td>
+        <td class="r" id="ft1q">&mdash;</td><td colspan="3" id="ft1i"></td></tr></tfoot></table>
+      <div class="empty" id="e1" style="display:none;">Nenhuma arrecadação registrada ainda.
+      Clique em <strong>Nova arrecadação</strong> para começar.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB 2 ============ -->
+<section class="tab-panel" id="t2">
+  <div class="kpis">
+    <div class="kpi"><div class="k" id="k5">0</div><div class="l">Total cadastrado</div></div>
+    <div class="kpi green"><div class="k" id="k6">0</div><div class="l">Em estoque</div></div>
+    <div class="kpi"><div class="k" id="k7">0</div><div class="l">Já utilizados</div></div>
+    <div class="kpi red"><div class="k" id="k8">0</div><div class="l">Vencidos em estoque</div></div>
+  </div>
+
+  <div class="col-section">
+    <div class="col-header" data-target="b-t2"><div><h2>Dar baixa, editar ou excluir</h2></div>
+      <span class="collapse-toggle"><span class="col-state">Ocultar</span>
+      <span class="collapse-icon">&#9660;</span></span></div>
+    <div class="col-body" id="b-t2">
+      <p class="note"><strong>Dar baixa</strong> marca o item como utilizado e o retira do estoque,
+      mas mantém o histórico nos indicadores. <strong>Excluir</strong> apaga de vez (use quando
+      o lançamento foi feito por engano).</p>
+      <div class="filter-bar">
+        <span class="f-lab">Situação</span>
+        <select class="f-sel" id="f2St"><option value="all">Todas</option>
+          <option value="estoque">Em estoque</option><option value="baixa">Utilizados</option></select>
+        <span class="f-lab">Tipo</span>
+        <select class="f-sel" id="f2Tipo"><option value="all">Todos</option>
+          <option>Alimentos</option><option>Roupas</option><option>Higiene</option></select>
+        <span class="f-lab">Buscar</span>
+        <input class="f-inp" id="f2Busca" placeholder="item, tamanho, observação...">
+        <button class="f-clear" id="f2Clear">Limpar filtros</button>
+      </div>
+      <div class="tbl-scroll"><table class="dt" id="tbl2"><thead><tr>
+        <th data-col="0">Item</th><th data-col="1">Tipo</th><th data-col="2" class="c">Tamanho</th>
+        <th data-col="3" class="r">Quantidade</th><th data-col="4" class="c">Data</th>
+        <th data-col="5" class="c">Validade</th><th data-col="6">Situação</th>
+        <th class="c">Ações</th>
+      </tr></thead><tbody></tbody></table>
+      <div class="empty" id="e2" style="display:none;">Nenhum item encontrado com esses filtros.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TAB 3 ============ -->
+<section class="tab-panel" id="t3">
+  <div class="kpis">
+    <div class="kpi"><div class="k" id="k9">0</div><div class="l">Arrecadações</div></div>
+    <div class="kpi"><div class="k" id="k10">0</div><div class="l">Alimentos (kg)</div></div>
+    <div class="kpi"><div class="k" id="k11">0</div><div class="l">Peças de roupa</div></div>
+    <div class="kpi"><div class="k" id="k12">0</div><div class="l">Itens de higiene</div></div>
+  </div>
+
+  <div class="charts">
+    <div class="card"><h3>Arrecadações por tipo</h3>
+      <div class="cs">Distribuição dos itens cadastrados</div>
+      <div class="wrap-c"><canvas id="pieTipo"></canvas></div>
+      <div class="legend" id="legTipo"></div></div>
+
+    <div class="card"><h3>Evolução mensal</h3>
+      <div class="cs">Meses com maior volume de arrecadação</div>
+      <div class="wrap-l"><canvas id="lineMes"></canvas></div></div>
+  </div>
+
+  <div class="col-section">
+    <div class="col-header" data-target="b-val"><div><h2>Prioridade de uso por validade</h2></div>
+      <span class="collapse-toggle"><span class="col-state">Ocultar</span>
+      <span class="collapse-icon">&#9660;</span></span></div>
+    <div class="col-body" id="b-val">
+      <p class="note">Os alimentos aparecem <strong>do vencimento mais próximo para o mais distante</strong>:
+      use primeiro os que estão no topo. Barras vermelhas já venceram, amarelas vencem em até 30 dias.</p>
+      <div class="card"><h3>Alimentos em estoque por dias até o vencimento</h3>
+        <div class="cs">Valores negativos indicam itens já vencidos</div>
+        <div class="wrap-l" id="wrapVal"><canvas id="barVal"></canvas></div>
+        <div class="empty" id="e3" style="display:none;">Nenhum alimento em estoque com data de validade.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div class="footer" id="foot"><span>Dados compartilhados entre todos os usuários</span><a href="#" id="lnkImp">Importar dados antigos</a><a href="#" id="lnkOut">Sair</a></div>
+
+
+<div id="gate"><div class="box">
+  <h3>Gestão de Doações</h3>
+  <p id="gateMsg">Digite a senha para acessar o sistema.</p>
+  <input type="password" id="gatePwd" placeholder="Senha" autocomplete="current-password">
+  <button id="gateBtn">Entrar</button>
+  <div class="gerr" id="gateErr"></div>
+</div></div>
+<div id="imp"><div class="box">
+  <h3>Importar dados antigos</h3>
+  <p>No navegador onde os dados foram cadastrados antes, abra a versão antiga, pressione F12, vá em <b>Console</b> e digite:<br>
+  <code>copy(localStorage.getItem('gestao_doacoes_v1'))</code><br>Depois cole o resultado abaixo.</p>
+  <textarea id="impTxt" placeholder="Cole aqui..."></textarea>
+  <button id="impOk">Importar</button><button class="sec" id="impNo">Cancelar</button>
+</div></div>
+<!-- ============ MODAL ============ -->
+<div class="modal-ov" id="ov"><div class="modal">
+  <div class="modal-head"><h3 id="mTitle">Nova arrecadação</h3>
+    <button class="modal-close" id="mClose">&times;</button></div>
+  <div class="modal-body">
+    <div class="err" id="mErr"></div>
+
+    <div class="fld"><label>Tipo da arrecadação</label>
+      <div class="tipo-grid">
+        <div class="tipo-opt" data-tipo="Alimentos"><div class="tx">Alimentos</div></div>
+        <div class="tipo-opt" data-tipo="Roupas"><div class="tx">Roupas</div></div>
+        <div class="tipo-opt" data-tipo="Higiene"><div class="tx">Higiene</div></div>
+      </div></div>
+
+    <div class="fld"><label>Descrição do item</label>
+      <input id="mNome" placeholder="ex.: Arroz tipo 1, Camiseta infantil, Sabonete">
+      <div class="hint">Opcional. Ajuda a identificar o item na tabela.</div></div>
+
+    <div class="fld"><label>Quantidade</label>
+      <div class="qty-row"><input type="number" id="mQtd" min="0" step="0.01" placeholder="0">
+        <div class="unit" id="mUnit">un</div></div>
+      <div class="hint" id="mQtdHint">Informe a quantidade de itens.</div></div>
+
+    <div class="fld" id="fldSize" style="display:none;"><label>Tamanho</label>
+      <div class="sz-grid">
+        <div class="sz-opt" data-sz="PP">PP</div><div class="sz-opt" data-sz="P">P</div>
+        <div class="sz-opt" data-sz="M">M</div><div class="sz-opt" data-sz="G">G</div>
+        <div class="sz-opt" data-sz="GG">GG</div><div class="sz-opt" data-sz="XG">XG</div>
+      </div></div>
+
+    <div class="fld" id="fldVal" style="display:none;"><label>Data de validade</label>
+      <input type="date" id="mVal">
+      <div class="val-prev" id="valPrev"></div></div>
+
+    <div class="fld"><label id="lblData">Data da arrecadação</label>
+      <input type="date" id="mData"></div>
+
+    <div class="fld"><label>Observações</label>
+      <textarea id="mObs" placeholder="Doador, campanha, destino..."></textarea></div>
+  </div>
+  <div class="modal-foot">
+    <button class="save-btn" id="mSave">Salvar arrecadação</button>
+    <button class="cancel-btn" id="mCancel">Cancelar</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="../backend/firebase-config.js"></script>
+<script src="../backend/firebase.js"></script>
+<script src="app.js"></script></body></html>
