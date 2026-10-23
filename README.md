@@ -12,13 +12,21 @@ O projeto usa Firebase Authentication e Cloud Firestore diretamente pelo SDK web
 
 ## Executar localmente
 
-Na pasta raiz do projeto, inicie um servidor estático:
+Com Node.js instalado, abra um terminal na pasta `MeusProjetos/meu-app-react` e execute:
 
 ```bash
-python -m http.server 8000
+npm install
+npm run dev
 ```
 
-Abra `http://localhost:8000/frontend/`. A autenticação também requer internet, o Firebase configurado e `localhost` autorizado no Firebase Authentication.
+O Vite abre a aplicação em `http://localhost:5173/frontend/`. A aplicação continua usando os arquivos existentes em `frontend/` e `backend/`; a autenticação e a sincronização com Firebase requerem internet, Firebase configurado e `localhost` autorizado no Firebase Authentication.
+
+Para gerar e visualizar uma versão de produção:
+
+```bash
+npm run build
+npm run preview
+```
 
 ## Configuração do Firebase
 

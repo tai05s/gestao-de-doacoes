@@ -1,7 +1,17 @@
-import react from '@vitejs/plugin-react'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 
-// https://vite.dev/config/
+const projectDir = dirname(fileURLToPath(import.meta.url))
+const repositoryRoot = resolve(projectDir, '../..')
+
 export default defineConfig({
-  plugins: [react()],
+  root: repositoryRoot,
+  cacheDir: resolve(projectDir, 'node_modules/.vite'),
+  build: {
+    outDir: resolve(projectDir, 'dist'),
+    rollupOptions: {
+      input: resolve(repositoryRoot, 'frontend/index.html'),
+    },
+  },
 })
