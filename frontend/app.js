@@ -681,7 +681,21 @@
         var arr = JSON.parse(document.getElementById('impTxt').value);
         if (!Array.isArray(arr) || !arr.length) throw 0;
         var base = Date.now() * 1000;
-        arr.forEach(function (o, i) { o.id = base + i; items.push(o); });
+        arr.forEach(function (o, i) {
+          var safeTipo = TIPO_COR[o && o.tipo] ? o.tipo : 'Alimentos';
+          var rec = {
+            id: base + i,
+            nome: String(o && o.nome != null ? o.nome : ''),
+            tipo: String(safeTipo),
+            size: String(o && o.size != null ? o.size : ''),
+            qtd: Number(o && o.qtd != null ? o.qtd : 0) || 0,
+            data: String(o && o.data != null ? o.data : ''),
+            validade: String(o && o.validade != null ? o.validade : ''),
+            obs: String(o && o.obs != null ? o.obs : ''),
+            baixa: !!(o && o.baixa)
+          };
+          items.push(rec);
+        });
         save(); renderAll(); imp.className = ''; document.getElementById('impTxt').value = '';
         toast('' + arr.length + ' registros importados');
       } catch (x) { toast('Conte\u00fado inv\u00e1lido. Copie novamente.', true); }
