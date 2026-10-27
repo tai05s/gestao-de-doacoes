@@ -1,7 +1,6 @@
 (function (global) {
   'use strict';
 
-  var LOGIN_EMAIL = 'doacoes@gestao.app';
   var auth = null;
   var db = null;
   var collection = null;
@@ -56,11 +55,14 @@
   function start(handlers) {
     callbacks = handlers;
     var config = global.FIREBASE_CONFIG;
-    if (!config || !config.apiKey || config.apiKey === 'COLE_AQUI') {
-      callbacks.onGate(true, 'Configuração do Firebase pendente. Preencha FIREBASE_CONFIG no código.');
+    if (!config || !config.apiKey || !config.authDomain || !config.projectId || !config.appId ||
+        !global.FIREBASE_LOGIN_EMAIL) {
+      callbacks.onGate(true, 'Configuração do Firebase pendente. Preencha as variáveis VITE_FIREBASE no arquivo .env.');
       document.getElementById('gatePwd').style.display = 'none';
       document.getElementById('gateBtn').style.display = 'none';
+      document.getElementById('gateEmail').style.display = 'none';
       callbacks.onBazarItems([]);
+      callbacks.onProfile(null);
       return;
     }
 
@@ -70,27 +72,41 @@
     db = global.firebase.firestore();
     auth.onAuthStateChanged(function (user) {
       if (user) {
+        callbacks.onProfile(user);
         callbacks.onGate(false);
         startSync();
       } else {
         stopSync();
         callbacks.onItems([]);
         callbacks.onBazarItems([]);
+        callbacks.onProfile(null);
         callbacks.onGate(true);
       }
     });
   }
 
-  function login(password) {
-    return auth.signInWithEmailAndPassword(LOGIN_EMAIL, password).catch(function (error) {
+  function login(email, password) {
+    return auth.signInWithEmailAndPassword(email, password).catch(function (error) {
       var code = error.code || '';
       if (code === 'auth/network-request-failed') throw new Error('Sem conexão com a internet.');
       if (code === 'auth/operation-not-allowed') throw new Error('Login por e-mail/senha não está ativado no Firebase.');
       if (code === 'auth/too-many-requests') throw new Error('Muitas tentativas. Aguarde alguns minutos.');
       if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
-        throw new Error('Senha incorreta (ou usuário ' + LOGIN_EMAIL + ' não existe no Firebase).');
+        throw new Error('E-mail ou senha incorretos.');
       }
       throw new Error('Erro: ' + code);
+    });
+  }
+
+  function updateProfile(displayName) {
+    var user = auth && auth.currentUser;
+    if (!user) return Promise.reject(new Error('Entre no sistema para editar o perfil.'));
+    return user.updateProfile({ displayName: displayName }).then(function () {
+      callbacks.onProfile(user);
+      return user;
+    }).catch(function (error) {
+      if (error.code === 'auth/network-request-failed') throw new Error('Sem conexão com a internet.');
+      throw new Error('Não foi possível salvar o perfil: ' + (error.message || error.code || 'erro desconhecido'));
     });
   }
 
@@ -157,6 +173,7 @@
   global.DonationBackend = {
     start: start,
     login: login,
+    updateProfile: updateProfile,
     logout: function () { return auth.signOut(); },
     save: save,
     saveBazarItems: saveBazarItems,

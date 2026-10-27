@@ -1,12 +1,14 @@
 (function (global) {
   'use strict';
 
+  var env = import.meta.env;
   global.FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDIUCnmF_uvKpt46_hIWx6yvBzwp1-ltPg",
-    authDomain: "gestao-doacoes-2c589.firebaseapp.com",
-    projectId: "gestao-doacoes-2c589",
-    storageBucket: "gestao-doacoes-2c589.firebasestorage.app",
-    messagingSenderId: "342477326345",
-    appId: "1:342477326345:web:39210a2b7eec8b2c53d0d8"
+    apiKey: env.VITE_FIREBASE_API_KEY,
+    authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: env.VITE_FIREBASE_APP_ID
   };
+  global.FIREBASE_LOGIN_EMAIL = env.VITE_FIREBASE_LOGIN_EMAIL || '';
 })(window);

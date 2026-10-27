@@ -504,6 +504,16 @@
       'Controle de arrecada\u00e7\u00f5es \u00b7 ' + items.length + ' registros \u00b7 ' + est + ' em estoque';
   }
 
+  function applyProfile(user) {
+    var name = user && user.displayName ? user.displayName : (user && user.email ? user.email.split('@')[0] : 'Perfil');
+    var email = user && user.email ? user.email : '';
+    document.getElementById('sidebarUserName').textContent = name;
+    document.getElementById('sidebarUserEmail').textContent = email;
+    document.getElementById('userAvatar').textContent = name.trim().charAt(0).toLocaleUpperCase() || '?';
+    document.getElementById('profileName').value = user && user.displayName ? user.displayName : '';
+    document.getElementById('profileEmail').value = email;
+  }
+
   function renderBazar() {
     var list = bazarItems.slice().sort(function (a, b) {
       return (a.baixa - b.baixa) || a.nome.localeCompare(b.nome);
@@ -574,8 +584,14 @@
     b.addEventListener('click', function () {
       document.querySelectorAll('.tab-btn').forEach(function (x) { x.classList.remove('active'); });
       document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
-      b.classList.add('active');
+      document.querySelectorAll('.tab-btn[data-tab="' + b.dataset.tab + '"]').forEach(function (button) {
+        button.classList.add('active');
+      });
       document.getElementById(b.dataset.tab).classList.add('active');
+      document.getElementById('pageTitle').textContent = {
+        t1: 'Inserir arrecadação', t2: 'Baixas e registros', t3: 'Indicadores',
+        t4: 'Itens do bazar', t5: 'Configurações de perfil', t6: 'Configurações do sistema'
+      }[b.dataset.tab];
       window.scrollTo({ top: 0, behavior: 'smooth' });
       setTimeout(function () {
         [pie, line, bar].forEach(function (c) { if (c) { c.resize(); c.update('none'); } });
@@ -620,6 +636,30 @@
   document.getElementById('mVal').addEventListener('change', previewVal);
   document.getElementById('mVal').addEventListener('input', previewVal);
   document.getElementById('mSave').addEventListener('click', saveItem);
+
+  document.getElementById('profileForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+    var name = document.getElementById('profileName').value.trim();
+    var error = document.getElementById('profileErr');
+    var button = document.getElementById('profileSave');
+    if (!name) {
+      error.textContent = 'Informe um nome para o perfil.';
+      error.className = 'err show';
+      return;
+    }
+    error.textContent = '';
+    error.className = 'err';
+    button.disabled = true;
+    window.DonationBackend.updateProfile(name).then(function () {
+      toast('Perfil atualizado');
+    }).catch(function (reason) {
+      error.textContent = reason.message;
+      error.className = 'err show';
+    }).then(function () {
+      button.disabled = false;
+    });
+  });
+
   document.getElementById('bazarType').addEventListener('change', function () {
     var showSize = this.value === 'Roupas';
     document.getElementById('bazarSizeField').style.display = showSize ? '' : 'none';
@@ -754,54 +794,118 @@
     toast('CSV exportado');
   });
 
-  /* limpar base */
+  document.getElementById('btnBackup').addEventListener('click', function () {
+    var backup = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      donations: items,
+      bazarItems: bazarItems
+    };
+    var blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'backup-gestao-doacoes-' + iso(today()) + '.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1200);
+    toast('Backup completo exportado');
+  });
+
+  document.getElementById('btnOpenImport').addEventListener('click', function () {
+    document.getElementById('importFile').click();
+  });
+  document.getElementById('importFile').addEventListener('change', function () {
+    var file = this.files && this.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var data;
+      try {
+        data = JSON.parse(String(reader.result || ''));
+      } catch (error) {
+        toast('Arquivo inválido. Selecione um backup JSON válido.', true);
+        return;
+      }
+      if (Array.isArray(data)) {
+        if (!data.every(function (item) { return item && typeof item === 'object' && item.tipo && item.nome; })) {
+          toast('A lista de arrecadações não tem um formato reconhecido.', true);
+          return;
+        }
+        var nextId = Date.now() * 1000;
+        data.forEach(function (item, index) {
+          var imported = Object.assign({}, item, { id: nextId + index });
+          items.push(imported);
+        });
+        save();
+        renderAll();
+        toast(data.length + ' arrecadações importadas');
+      } else if (data && data.version === 1 && Array.isArray(data.donations) &&
+          Array.isArray(data.bazarItems) &&
+          data.donations.every(function (item) { return item && typeof item === 'object' && item.id != null && item.tipo && item.nome; }) &&
+          data.bazarItems.every(function (item) {
+            return item && typeof item === 'object' && item.id != null && item.nome &&
+              (item.tipo === 'Roupas' || item.tipo === 'Objetos');
+          })) {
+        if (!confirm('Restaurar este backup substituirá todas as arrecadações e itens do bazar atuais. Deseja continuar?')) return;
+        items = data.donations;
+        bazarItems = data.bazarItems;
+        save();
+        window.DonationBackend.saveBazarItems(bazarItems);
+        renderAll();
+        renderBazar();
+        toast('Backup completo restaurado');
+      } else {
+        toast('Formato de arquivo não reconhecido. Use um backup JSON do sistema ou uma lista antiga de arrecadações.', true);
+      }
+    };
+    reader.onerror = function () { toast('Não foi possível ler o arquivo selecionado.', true); };
+    reader.readAsText(file);
+    this.value = '';
+  });
+
+  /* limpar todos os dados */
   document.getElementById('btnWipe').addEventListener('click', function () {
-    if (!confirm('Apagar TODAS as arrecada\u00e7\u00f5es?\\n\\nOs dados de exemplo tamb\u00e9m ser\u00e3o removidos.')) return;
-    items = []; save(); renderAll(); toast('Base zerada', true);
+    if (!confirm('Apagar TODAS as arrecadações e todos os itens do bazar?\\n\\nEsta ação não pode ser desfeita.')) return;
+    items = [];
+    bazarItems = [];
+    save();
+    window.DonationBackend.saveBazarItems(bazarItems);
+    renderAll();
+    toast('Todos os dados foram removidos', true);
   });
 
   /* ---------------- nuvem: login + sincronização ---------------- */
   function gate(show, msg) {
     document.getElementById('gate').className = show ? 'show' : '';
+    document.getElementById('appShell').classList.toggle('authenticated', !show);
+    if (!show) document.getElementById('gateErr').textContent = '';
     if (msg) document.getElementById('gateMsg').textContent = msg;
   }
   function initCloud() {
     var gatePwd = document.getElementById('gatePwd');
     var gateErr = document.getElementById('gateErr');
-    document.getElementById('gateBtn').addEventListener('click', function () {
+    var gateEmail = document.getElementById('gateEmail');
+    gateEmail.value = window.FIREBASE_LOGIN_EMAIL || '';
+    document.getElementById('loginForm').addEventListener('submit', function (event) {
+      event.preventDefault();
       gateErr.textContent = '';
-      if (!gatePwd.value) return;
-      window.DonationBackend.login(gatePwd.value).then(function () {
+      if (!gateEmail.value || !gatePwd.value) return;
+      var button = document.getElementById('gateBtn');
+      button.disabled = true;
+      window.DonationBackend.login(gateEmail.value.trim(), gatePwd.value).then(function () {
         gatePwd.value = '';
       }).catch(function (error) {
         gateErr.textContent = error.message;
+      }).then(function () {
+        button.disabled = false;
       });
     });
-    gatePwd.addEventListener('keydown', function (event) {
-      if (event.key === 'Enter') document.getElementById('gateBtn').click();
-    });
     document.getElementById('lnkOut').addEventListener('click', function (event) {
-      event.preventDefault();
-      window.DonationBackend.logout();
-    });
-
-    /* importar dados do navegador antigo */
-    var imp = document.getElementById('imp');
-    document.getElementById('lnkImp').addEventListener('click', function (e) { e.preventDefault(); imp.className = 'show'; });
-    document.getElementById('impNo').addEventListener('click', function () { imp.className = ''; });
-    document.getElementById('impOk').addEventListener('click', function () {
-      try {
-        var arr = JSON.parse(document.getElementById('impTxt').value);
-        if (!Array.isArray(arr) || !arr.length) throw 0;
-        var base = Date.now() * 1000;
-        arr.forEach(function (o, i) { o.id = base + i; items.push(o); });
-        save(); renderAll(); imp.className = ''; document.getElementById('impTxt').value = '';
-        toast('' + arr.length + ' registros importados');
-      } catch (x) { toast('Conte\u00fado inv\u00e1lido. Copie novamente.', true); }
+      window.DonationBackend.logout().catch(function (error) { toast('Não foi possível sair: ' + error.message, true); });
     });
     window.DonationBackend.start({
       onItems: function (records) { items = records; renderAll(); },
       onBazarItems: function (records) { bazarItems = records; renderBazar(); },
+      onProfile: applyProfile,
       onGate: gate,
       onError: function (message) { toast(message, true); }
     });

@@ -3,21 +3,32 @@
 <link rel="stylesheet" href="styles.css">
 <script type="module" src="vendor/chart.umd.js"></script>
 </head><body>
+<div class="app-shell" id="appShell">
+<aside class="sidebar">
+  <div class="sidebar-brand"><span class="brand-mark">GD</span><div><strong>Gestão de</strong><strong>Doações</strong></div></div>
+  <div class="side-label">MENU</div>
+  <nav class="side-nav" aria-label="Navegação principal">
+    <button class="tab-btn active" data-tab="t1"><span class="nav-icon">＋</span>Inserir arrecadação</button>
+    <button class="tab-btn" data-tab="t2"><span class="nav-icon">▤</span>Baixas e registros</button>
+    <button class="tab-btn" data-tab="t3"><span class="nav-icon">▥</span>Indicadores</button>
+    <button class="tab-btn" data-tab="t4"><span class="nav-icon">▣</span>Itens do bazar</button>
+  </nav>
+  <div class="side-label side-settings-label">CONFIGURAÇÕES</div>
+  <nav class="side-nav" aria-label="Configurações">
+    <button class="tab-btn" data-tab="t5"><span class="nav-icon">◉</span>Configurações de perfil</button>
+    <button class="tab-btn" data-tab="t6"><span class="nav-icon">⚙</span>Configurações do sistema</button>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="userAvatar">?</div>
+    <div class="user-summary"><strong id="sidebarUserName">Perfil</strong><span id="sidebarUserEmail"></span></div>
+    <button class="logout-btn" id="lnkOut" type="button" aria-label="Sair da conta" title="Sair">↪</button>
+  </div>
+</aside>
+<div class="workspace">
 <header><div class="header-row">
-<div><h1>Gestão de Doações</h1>
+<div><h1 id="pageTitle">Inserir arrecadação</h1>
 <div class="sub" id="hdrSub">Controle de arrecadações de roupas, alimentos e higiene</div></div>
-<div class="btn-group">
-<button class="hdr-btn" id="btnCsv">Exportar CSV</button>
-<button class="hdr-btn ghost" id="btnWipe">Limpar dados</button>
-</div></div></header>
-
-<nav class="tabs">
-<button class="tab-btn" data-tab="t4">Itens do bazar</button>
-<button class="tab-btn active" data-tab="t1">Inserir arrecadação</button>
-<button class="tab-btn" data-tab="t2">Dar baixa ou excluir</button>
-<button class="tab-btn" data-tab="t3">Indicadores</button>
-</nav>
-
+</div></header>
 <main>
 
 <!-- ============ TAB 4 ============ -->
@@ -183,25 +194,56 @@
   </div>
 </section>
 
+<!-- ============ PERFIL ============ -->
+<section class="tab-panel" id="t5">
+  <div class="settings-heading"><h2>Configurações de perfil</h2><p>Atualize seu nome de exibição. O e-mail de acesso é gerenciado pelo Firebase.</p></div>
+  <div class="card settings-card">
+    <h3>Editar perfil</h3>
+    <form id="profileForm">
+      <div class="fld"><label for="profileName">Nome de exibição</label>
+        <input id="profileName" maxlength="80" autocomplete="name" required></div>
+      <div class="fld"><label for="profileEmail">E-mail da conta</label>
+        <input id="profileEmail" type="email" readonly aria-readonly="true">
+        <div class="hint">Para alterar o e-mail de login, use o gerenciamento de usuários do Firebase.</div></div>
+      <button class="save-btn" id="profileSave" type="submit">Salvar perfil</button>
+      <div class="err" id="profileErr"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ============ SISTEMA ============ -->
+<section class="tab-panel" id="t6">
+  <div class="settings-heading"><h2>Configurações do sistema</h2><p>Exporte, importe ou limpe os dados do sistema.</p></div>
+  <div class="settings-grid">
+    <div class="card settings-card"><h3>Exportar dados</h3>
+      <p class="note">Baixe os registros de arrecadações em CSV ou um backup completo em JSON, incluindo o bazar.</p>
+      <div class="settings-actions"><button class="hdr-btn" id="btnCsv" type="button">Exportar arrecadações (CSV)</button>
+        <button class="save-btn" id="btnBackup" type="button">Baixar backup completo (JSON)</button></div></div>
+    <div class="card settings-card"><h3>Importar dados</h3>
+      <p class="note">Restaure um backup JSON do sistema ou importe uma lista antiga de arrecadações.</p>
+      <button class="hdr-btn" id="btnOpenImport" type="button">Selecionar arquivo para importar</button>
+      <input id="importFile" type="file" accept=".json,application/json" hidden></div>
+    <div class="card settings-card danger-card"><h3>Limpar dados</h3>
+      <p class="note">Apaga todas as arrecadações e todos os itens do bazar. Esta ação não pode ser desfeita.</p>
+      <button class="hdr-btn ghost" id="btnWipe" type="button">Limpar todos os dados</button></div>
+  </div>
+</section>
+
 </main>
-
-<div class="footer" id="foot"><span>Dados compartilhados entre todos os usuários</span><a href="#" id="lnkImp">Importar dados antigos</a><a href="#" id="lnkOut">Sair</a></div>
-
-
-<div id="gate"><div class="box">
-  <h3>Gestão de Doações</h3>
-  <p id="gateMsg">Digite a senha para acessar o sistema.</p>
-  <input type="password" id="gatePwd" placeholder="Senha" autocomplete="current-password">
-  <button id="gateBtn">Entrar</button>
-  <div class="gerr" id="gateErr"></div>
 </div></div>
-<div id="imp"><div class="box">
-  <h3>Importar dados antigos</h3>
-  <p>No navegador onde os dados foram cadastrados antes, abra a versão antiga, pressione F12, vá em <b>Console</b> e digite:<br>
-  <code>copy(localStorage.getItem('gestao_doacoes_v1'))</code><br>Depois cole o resultado abaixo.</p>
-  <textarea id="impTxt" placeholder="Cole aqui..."></textarea>
-  <button id="impOk">Importar</button><button class="sec" id="impNo">Cancelar</button>
-</div></div>
+<section id="gate" class="show" aria-labelledby="loginTitle">
+  <form class="login-box" id="loginForm">
+    <span class="brand-mark">GD</span>
+    <h1 id="loginTitle">Gestão de Doações</h1>
+    <p id="gateMsg">Entre com suas credenciais para acessar o sistema.</p>
+    <label for="gateEmail">E-mail</label>
+    <input type="email" id="gateEmail" autocomplete="username" required>
+    <label for="gatePwd">Senha</label>
+    <input type="password" id="gatePwd" placeholder="Senha" autocomplete="current-password" required>
+    <button id="gateBtn" type="submit">Entrar</button>
+    <div class="gerr" id="gateErr" role="alert"></div>
+  </form>
+</section>
 <!-- ============ MODAL ============ -->
 <div class="modal-ov" id="ov"><div class="modal">
   <div class="modal-head"><h3 id="mTitle">Nova arrecadação</h3>
