@@ -12,12 +12,47 @@
 </div></div></header>
 
 <nav class="tabs">
+<button class="tab-btn" data-tab="t4">Itens do bazar</button>
 <button class="tab-btn active" data-tab="t1">Inserir arrecadação</button>
 <button class="tab-btn" data-tab="t2">Dar baixa ou excluir</button>
 <button class="tab-btn" data-tab="t3">Indicadores</button>
 </nav>
 
 <main>
+
+<!-- ============ TAB 4 ============ -->
+<section class="tab-panel" id="t4">
+  <div class="col-section">
+    <div class="col-header" data-target="b-bazar"><div><h2>Cadastro de itens do bazar</h2></div>
+      <span class="collapse-toggle"><span class="col-state">Ocultar</span><span class="collapse-icon">&#9660;</span></span></div>
+    <div class="col-body" id="b-bazar">
+      <p class="note">Controle os itens recebidos para o bazar. Este estoque é separado das arrecadações e não aparece nos indicadores.</p>
+      <form class="bazar-form" id="bazarForm">
+        <div class="fld"><label for="bazarName">Nome do item</label>
+          <input id="bazarName" maxlength="100" placeholder="Ex.: Camisa social, vaso decorativo" required></div>
+        <div class="fld"><label for="bazarType">Tipo</label>
+          <select id="bazarType" required>
+            <option value="">Selecione</option><option>Roupas</option><option>Objetos</option>
+          </select></div>
+        <div class="fld"><label for="bazarQty">Quantidade</label>
+          <input id="bazarQty" type="number" min="1" step="1" value="1" required></div>
+        <div class="fld" id="bazarSizeField" style="display:none;"><label for="bazarSize">Tamanho</label>
+          <select id="bazarSize">
+            <option value="">Sem tamanho</option><option>PP</option><option>P</option><option>M</option>
+            <option>G</option><option>GG</option><option>XG</option>
+          </select></div>
+        <div class="bazar-actions">
+          <button class="save-btn" id="bazarSave" type="submit">Cadastrar item</button>
+          <button class="cancel-btn" id="bazarCancel" type="button" style="display:none;">Cancelar edição</button>
+        </div>
+      </form>
+      <div class="tbl-scroll"><table class="dt" id="bazarTable">
+        <thead><tr><th>Item</th><th>Tipo</th><th class="c">Tamanho</th><th class="r">Quantidade</th><th>Situação</th><th class="c">Ações</th></tr></thead><tbody></tbody>
+      </table>
+      <div class="empty" id="bazarEmpty" style="display:none;">Nenhum item de bazar cadastrado. Use o formulário acima para começar.</div></div>
+    </div>
+  </div>
+</section>
 
 <!-- ============ TAB 1 ============ -->
 <section class="tab-panel active" id="t1">
@@ -37,7 +72,7 @@
         <button class="add-btn" id="btnAdd">Nova arrecadação</button>
         <span class="add-hint">Informe tipo, quantidade e data. O item entra na tabela e fica salvo para todos os usuários.</span>
       </div>
-      <p class="note"><strong>Como funciona:</strong> escolha <strong>Alimentos</strong> para informar a data de validade (a tabela mostra verde, amarelo ou vermelho conforme o vencimento) ou <strong>Roupas</strong> para escolher o tamanho.</p>
+      <p class="note"><strong>Como funciona:</strong> informe a validade de <strong>Alimentos</strong>, <strong>Higiene</strong> e <strong>Remédios</strong> para acompanhar vencimentos; para <strong>Roupas</strong>, escolha o tamanho.</p>
     </div>
   </div>
 
@@ -49,7 +84,7 @@
       <div class="filter-bar">
         <span class="f-lab">Tipo</span>
         <select class="f-sel" id="f1Tipo"><option value="all">Todos</option>
-          <option>Alimentos</option><option>Roupas</option><option>Higiene</option></select>
+          <option>Alimentos</option><option>Roupas</option><option>Higiene</option><option>Remédios</option></select>
         <span class="f-lab">Validade</span>
         <select class="f-sel" id="f1Val"><option value="all">Todas</option>
           <option value="ok">Dentro da validade</option>
@@ -95,7 +130,7 @@
           <option value="estoque">Em estoque</option><option value="baixa">Utilizados</option></select>
         <span class="f-lab">Tipo</span>
         <select class="f-sel" id="f2Tipo"><option value="all">Todos</option>
-          <option>Alimentos</option><option>Roupas</option><option>Higiene</option></select>
+          <option>Alimentos</option><option>Roupas</option><option>Higiene</option><option>Remédios</option></select>
         <span class="f-lab">Buscar</span>
         <input class="f-inp" id="f2Busca" placeholder="item, tamanho, observação...">
         <button class="f-clear" id="f2Clear">Limpar filtros</button>
@@ -118,6 +153,7 @@
     <div class="kpi"><div class="k" id="k10">0</div><div class="l">Alimentos (kg)</div></div>
     <div class="kpi"><div class="k" id="k11">0</div><div class="l">Peças de roupa</div></div>
     <div class="kpi"><div class="k" id="k12">0</div><div class="l">Itens de higiene</div></div>
+    <div class="kpi"><div class="k" id="k13">0</div><div class="l">Remédios</div></div>
   </div>
 
   <div class="charts">
@@ -136,12 +172,12 @@
       <span class="collapse-toggle"><span class="col-state">Ocultar</span>
       <span class="collapse-icon">&#9660;</span></span></div>
     <div class="col-body" id="b-val">
-      <p class="note">Os alimentos aparecem <strong>do vencimento mais próximo para o mais distante</strong>:
+      <p class="note">Alimentos, itens de higiene e remédios aparecem <strong>do vencimento mais próximo para o mais distante</strong>:
       use primeiro os que estão no topo. Barras vermelhas já venceram, amarelas vencem em até 30 dias.</p>
-      <div class="card"><h3>Alimentos em estoque por dias até o vencimento</h3>
+      <div class="card"><h3>Itens em estoque por dias até o vencimento</h3>
         <div class="cs">Valores negativos indicam itens já vencidos</div>
         <div class="wrap-l" id="wrapVal"><canvas id="barVal"></canvas></div>
-        <div class="empty" id="e3" style="display:none;">Nenhum alimento em estoque com data de validade.</div>
+        <div class="empty" id="e3" style="display:none;">Nenhum alimento, item de higiene ou remédio em estoque com data de validade.</div>
       </div>
     </div>
   </div>
@@ -178,6 +214,7 @@
         <div class="tipo-opt" data-tipo="Alimentos"><div class="tx">Alimentos</div></div>
         <div class="tipo-opt" data-tipo="Roupas"><div class="tx">Roupas</div></div>
         <div class="tipo-opt" data-tipo="Higiene"><div class="tx">Higiene</div></div>
+        <div class="tipo-opt" data-tipo="Remédios"><div class="tx">Remédios</div></div>
       </div></div>
 
     <div class="fld"><label>Descrição do item</label>
@@ -196,7 +233,7 @@
         <div class="sz-opt" data-sz="GG">GG</div><div class="sz-opt" data-sz="XG">XG</div>
       </div></div>
 
-    <div class="fld" id="fldVal" style="display:none;"><label>Data de validade</label>
+    <div class="fld" id="fldVal" style="display:none;"><label id="lblVal">Data de validade</label>
       <input type="date" id="mVal">
       <div class="val-prev" id="valPrev"></div></div>
 

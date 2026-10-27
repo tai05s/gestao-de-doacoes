@@ -32,11 +32,13 @@ npm run preview
 
 Os dados públicos do projeto estão em `backend/firebase-config.js`. Para usar outro projeto, atualize os campos de configuração ali. O endereço de login está em `backend/firebase.js`; o usuário correspondente precisa existir no Firebase Authentication com login por e-mail e senha habilitado.
 
-Configure as regras do Cloud Firestore para permitir acesso somente aos usuários autorizados. A aplicação salva os registros na coleção `doacoes` e os sincroniza em tempo real.
+Configure as regras do Cloud Firestore para permitir acesso somente aos usuários autorizados nas coleções `doacoes` e `bazar`. A aplicação mantém as arrecadações e o estoque do bazar separados e sincroniza ambos em tempo real.
 
 ## Recursos
 
 - Cadastro e edição de arrecadações.
+- Arrecadação de remédios e controle de validade para alimentos, higiene e remédios.
+- Controle compartilhado de roupas e objetos do bazar, com baixa e reversão sem inclusão nos indicadores de doações.
 - Baixa, exclusão, filtros e exportação CSV.
 - Indicadores e gráficos de estoque e validade.
 - Importação de registros antigos do armazenamento local do navegador.

@@ -5,21 +5,29 @@
   var auth = null;
   var db = null;
   var collection = null;
+  var bazarCollection = null;
   var synced = {};
-  var unsubscribe = null;
+  var syncedBazar = {};
+  var unsubscribeItems = null;
+  var unsubscribeBazar = null;
   var callbacks = {};
 
   function stopSync() {
-    if (unsubscribe) unsubscribe();
-    unsubscribe = null;
+    if (unsubscribeItems) unsubscribeItems();
+    if (unsubscribeBazar) unsubscribeBazar();
+    unsubscribeItems = null;
+    unsubscribeBazar = null;
     collection = null;
+    bazarCollection = null;
     synced = {};
+    syncedBazar = {};
   }
 
   function startSync() {
     stopSync();
     collection = db.collection('doacoes');
-    unsubscribe = collection.onSnapshot(function (snapshot) {
+    bazarCollection = db.collection('bazar');
+    unsubscribeItems = collection.onSnapshot(function (snapshot) {
       var items = [];
       synced = {};
       snapshot.forEach(function (document) {
@@ -31,6 +39,18 @@
     }, function () {
       callbacks.onError('Sem conexão com o servidor');
     });
+    unsubscribeBazar = bazarCollection.onSnapshot(function (snapshot) {
+      var items = [];
+      syncedBazar = {};
+      snapshot.forEach(function (document) {
+        var item = document.data();
+        items.push(item);
+        syncedBazar[item.id] = JSON.stringify(item);
+      });
+      callbacks.onBazarItems(items);
+    }, function () {
+      callbacks.onError('Não foi possível carregar o estoque do bazar');
+    });
   }
 
   function start(handlers) {
@@ -40,6 +60,7 @@
       callbacks.onGate(true, 'Configuração do Firebase pendente. Preencha FIREBASE_CONFIG no código.');
       document.getElementById('gatePwd').style.display = 'none';
       document.getElementById('gateBtn').style.display = 'none';
+      callbacks.onBazarItems([]);
       return;
     }
 
@@ -54,6 +75,7 @@
       } else {
         stopSync();
         callbacks.onItems([]);
+        callbacks.onBazarItems([]);
         callbacks.onGate(true);
       }
     });
@@ -102,10 +124,45 @@
     }
   }
 
+  function saveBazarItems(items) {
+    if (!bazarCollection) return;
+    var operations = [];
+    var current = {};
+    items.forEach(function (item) {
+      var serialized = JSON.stringify(item);
+      current[item.id] = true;
+      if (syncedBazar[item.id] !== serialized) {
+        operations.push({ set: item });
+        syncedBazar[item.id] = serialized;
+      }
+    });
+    Object.keys(syncedBazar).forEach(function (id) {
+      if (!current[id]) {
+        operations.push({ delete: id });
+        delete syncedBazar[id];
+      }
+    });
+    for (var index = 0; index < operations.length; index += 400) {
+      var batch = db.batch();
+      operations.slice(index, index + 400).forEach(function (operation) {
+        if (operation.set) batch.set(bazarCollection.doc(String(operation.set.id)), operation.set);
+        else batch.delete(bazarCollection.doc(operation.delete));
+      });
+      batch.commit().catch(function () {
+        callbacks.onError('Não foi possível salvar o estoque do bazar');
+      });
+    }
+  }
+
   global.DonationBackend = {
     start: start,
     login: login,
     logout: function () { return auth.signOut(); },
-    save: save
+    save: save,
+    saveBazarItems: saveBazarItems,
+    newBazarItemId: function () {
+      if (!bazarCollection) throw new Error('O Firebase ainda não está conectado.');
+      return bazarCollection.doc().id;
+    }
   };
 })(window);

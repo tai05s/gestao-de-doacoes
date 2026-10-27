@@ -4,10 +4,12 @@
 
   var KEY = 'gestao_doacoes_v1';
   var MES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-  var TIPO_COR = { Alimentos: '#3D5A80', Roupas: '#9A6B2F', Higiene: '#7A4E7E' };
+  var TIPO_COR = { Alimentos: '#3D5A80', Roupas: '#9A6B2F', Higiene: '#7A4E7E', Remédios: '#A0443D', Objetos: '#52665A' };
 
   var items = [];
+  var bazarItems = [];
   var editId = null;
+  var bazarEditId = null;
   var draft = { tipo: '', size: '' };
 
   /* ---------------- utils ---------------- */
@@ -33,7 +35,7 @@
   }
   /* semáforo de validade */
   function vstat(it) {
-    if (it.tipo !== 'Alimentos' || !it.validade) return null;
+    if (['Alimentos', 'Higiene', 'Remédios'].indexOf(it.tipo) < 0 || !it.validade) return null;
     var n = dias(it.validade);
     if (n < 0) return { k: 'exp', cor: '#B3261E', txt: 'Vencido h\u00e1 ' + Math.abs(n) + 'd' };
     if (n <= 30) return { k: 'soon', cor: '#B8860B', txt: 'Vence em ' + n + 'd' };
@@ -125,9 +127,12 @@
   /* campos condicionais */
   function applyTipo() {
     var t = draft.tipo;
-    var isAli = (t === 'Alimentos'), isRou = (t === 'Roupas');
+    var isAli = (t === 'Alimentos'), hasValidade = isAli || t === 'Higiene' || t === 'Remédios';
+    var isRou = (t === 'Roupas');
     document.getElementById('fldSize').style.display = isRou ? '' : 'none';
-    document.getElementById('fldVal').style.display = isAli ? '' : 'none';
+    document.getElementById('fldVal').style.display = hasValidade ? '' : 'none';
+    document.getElementById('lblVal').textContent = t === 'Higiene' ? 'Data de validade do item de higiene'
+      : (t === 'Remédios' ? 'Data de validade do remédio' : 'Data de validade do alimento');
     document.getElementById('mUnit').textContent = isAli ? 'kg' : 'un';
     document.getElementById('mQtdHint').textContent = isAli
       ? 'Alimentos s\u00e3o registrados por peso, em quilos (kg).'
@@ -140,8 +145,8 @@
   function previewVal() {
     var box = document.getElementById('valPrev');
     var v = document.getElementById('mVal').value;
-    if (draft.tipo !== 'Alimentos' || !v) { box.className = 'val-prev'; return; }
-    var st = vstat({ tipo: 'Alimentos', validade: v });
+    if (['Alimentos', 'Higiene', 'Remédios'].indexOf(draft.tipo) < 0 || !v) { box.className = 'val-prev'; return; }
+    var st = vstat({ tipo: draft.tipo, validade: v });
     box.className = 'val-prev show';
     box.style.background = st.k === 'exp' ? '#FBEFEE' : (st.k === 'soon' ? '#FBF6E8' : '#EEF6F0');
     box.style.color = st.cor;
@@ -162,19 +167,21 @@
     if (!qtd || qtd <= 0) return mErr('Informe uma quantidade maior que zero.');
     var data = document.getElementById('mData').value;
     if (!data) return mErr('Informe a data da arrecada\u00e7\u00e3o.');
-    if (tipo === 'Roupas' && !draft.size) return mErr('Escolha o tamanho da pe\u00e7a.');
     var val = document.getElementById('mVal').value;
-    if (tipo === 'Alimentos' && !val) return mErr('Informe a data de validade do alimento.');
+    if (['Alimentos', 'Higiene', 'Remédios'].indexOf(tipo) >= 0 && !val) {
+      return mErr('Informe a data de validade do item.');
+    }
 
     var nome = document.getElementById('mNome').value.trim() || tipo;
     var obs = document.getElementById('mObs').value.trim();
+    if (tipo === 'Roupas' && !draft.size) return mErr('Escolha o tamanho da pe\u00e7a.');
 
     if (editId) {
       var it = items.filter(function (x) { return x.id === editId; })[0];
       if (it) {
         it.tipo = tipo; it.nome = nome; it.qtd = qtd; it.data = data;
         it.size = (tipo === 'Roupas') ? draft.size : '';
-        it.validade = (tipo === 'Alimentos') ? val : '';
+        it.validade = (['Alimentos', 'Higiene', 'Remédios'].indexOf(tipo) >= 0) ? val : '';
         it.obs = obs;
       }
       toast('Arrecada\u00e7\u00e3o atualizada');
@@ -183,8 +190,7 @@
       items.push({
         id: nid, tipo: tipo, nome: nome, qtd: qtd, data: data,
         size: (tipo === 'Roupas') ? draft.size : '',
-        validade: (tipo === 'Alimentos') ? val : '',
-        obs: obs, baixa: false
+        validade: (['Alimentos', 'Higiene', 'Remédios'].indexOf(tipo) >= 0) ? val : '', obs: obs, baixa: false
       });
       toast('' + nome + ' registrado na tabela');
     }
@@ -332,8 +338,8 @@
   };
 
   function renderCharts() {
-    var TP = ['Alimentos', 'Roupas', 'Higiene'];
-    var cnt = { Alimentos: 0, Roupas: 0, Higiene: 0 };
+    var TP = ['Alimentos', 'Roupas', 'Higiene', 'Remédios'];
+    var cnt = { Alimentos: 0, Roupas: 0, Higiene: 0, Remédios: 0 };
     items.forEach(function (i) { if (cnt[i.tipo] != null) cnt[i.tipo]++; });
     var tot = items.length || 1;
 
@@ -417,7 +423,9 @@
     }
 
     /* ---- validade ---- */
-    var ali = items.filter(function (i) { return !i.baixa && i.tipo === 'Alimentos' && i.validade; });
+    var ali = items.filter(function (i) {
+      return !i.baixa && ['Alimentos', 'Higiene', 'Remédios'].indexOf(i.tipo) >= 0 && i.validade;
+    });
     ali.sort(function (a, b) { return a.validade.localeCompare(b.validade); });
     var top = ali.slice(0, 12);
     var wrap = document.getElementById('wrapVal');
@@ -425,7 +433,7 @@
     wrap.style.display = top.length ? '' : 'none';
     if (top.length) {
       wrap.style.height = Math.max(240, top.length * 34 + 40) + 'px';
-      var bl = top.map(function (i) { return i.nome + '  (' + br(i.validade) + ')'; });
+      var bl = top.map(function (i) { return i.nome + ' · ' + i.tipo + '  (' + br(i.validade) + ')'; });
       var bv = top.map(function (i) { return dias(i.validade); });
       var bc = top.map(function (i) { var s = vstat(i); return s.cor; });
       if (!bar) {
@@ -479,17 +487,86 @@
       .reduce(function (a, i) { return a + (+i.qtd || 0); }, 0);
     var hi = items.filter(function (i) { return i.tipo === 'Higiene'; })
       .reduce(function (a, i) { return a + (+i.qtd || 0); }, 0);
+    var med = items.filter(function (i) { return i.tipo === 'Remédios'; })
+      .reduce(function (a, i) { return a + (+i.qtd || 0); }, 0);
     document.getElementById('k9').textContent = items.length;
     document.getElementById('k10').textContent = kg.toFixed(kg % 1 ? 1 : 0).replace('.', ',');
     document.getElementById('k11').textContent = ro;
     document.getElementById('k12').textContent = hi;
+    document.getElementById('k13').textContent = med;
   }
 
   function renderAll() {
     renderT1(); renderT2(); renderCharts();
+    renderBazar();
     var est = items.filter(function (i) { return !i.baixa; }).length;
     document.getElementById('hdrSub').textContent =
       'Controle de arrecada\u00e7\u00f5es \u00b7 ' + items.length + ' registros \u00b7 ' + est + ' em estoque';
+  }
+
+  function renderBazar() {
+    var list = bazarItems.slice().sort(function (a, b) {
+      return (a.baixa - b.baixa) || a.nome.localeCompare(b.nome);
+    });
+    document.querySelector('#bazarTable tbody').innerHTML = list.map(function (item) {
+      return '<tr class="' + (item.baixa ? 'done' : '') + '">' +
+        '<td class="nm">' + esc(item.nome) + '</td>' +
+        '<td><span class="tp"><span class="dot" style="background:' + TIPO_COR[item.tipo] + '"></span>' + esc(item.tipo) + '</span></td>' +
+        '<td class="c">' + (item.size ? '<span class="sz">' + esc(item.size) + '</span>' : '<span class="muted">—</span>') + '</td>' +
+        '<td class="r num">' + (Number(item.qtd) || 0) + ' un</td>' +
+        '<td>' + (item.baixa ? '<span class="st"><span class="dot" style="background:#A9B1AC"></span>Baixado</span>' :
+          '<span class="st"><span class="dot" style="background:#2F7D4F"></span>Disponível</span>') + '</td>' +
+        '<td class="c"><div class="act">' +
+        (item.baixa
+          ? '<button class="abtn un" data-bazar-act="undo" data-id="' + esc(item.id) + '">Reverter baixa</button>'
+          : '<button class="abtn ok" data-bazar-act="done" data-id="' + esc(item.id) + '">Dar baixa</button>') +
+        '<button class="abtn ed" data-bazar-act="edit" data-id="' + esc(item.id) + '">Editar</button>' +
+        '<button class="abtn rm" data-bazar-act="del" data-id="' + esc(item.id) + '">Excluir</button>' +
+        '</div></td></tr>';
+    }).join('');
+    document.getElementById('bazarEmpty').style.display = list.length ? 'none' : '';
+  }
+
+  function resetBazarForm() {
+    bazarEditId = null;
+    document.getElementById('bazarForm').reset();
+    document.getElementById('bazarQty').value = '1';
+    document.getElementById('bazarSizeField').style.display = 'none';
+    document.getElementById('bazarSave').textContent = 'Cadastrar item';
+    document.getElementById('bazarCancel').style.display = 'none';
+  }
+
+  function saveBazarItem(event) {
+    event.preventDefault();
+    var nome = document.getElementById('bazarName').value.trim();
+    var tipo = document.getElementById('bazarType').value;
+    var qtd = Number(document.getElementById('bazarQty').value);
+    var size = tipo === 'Roupas' ? document.getElementById('bazarSize').value : '';
+    if (!nome || (tipo !== 'Roupas' && tipo !== 'Objetos')) return toast('Informe o nome e o tipo do item.', true);
+    if (!Number.isInteger(qtd) || qtd < 1) return toast('Informe uma quantidade inteira maior que zero.', true);
+
+    if (bazarEditId) {
+      var existing = bazarItems.filter(function (item) { return item.id === bazarEditId; })[0];
+      if (!existing) return toast('O item não está mais disponível para edição.', true);
+      existing.nome = nome;
+      existing.tipo = tipo;
+      existing.qtd = qtd;
+      existing.size = size;
+      toast('Item do bazar atualizado');
+    } else {
+      try {
+        bazarItems.push({
+          id: window.DonationBackend.newBazarItemId(), nome: nome, tipo: tipo,
+          qtd: qtd, size: size, baixa: false
+        });
+      } catch (error) {
+        return toast(error.message, true);
+      }
+      toast('Item cadastrado no bazar');
+    }
+    window.DonationBackend.saveBazarItems(bazarItems);
+    resetBazarForm();
+    renderBazar();
   }
 
   /* ---------------- eventos ---------------- */
@@ -526,7 +603,7 @@
 
   document.querySelectorAll('.tipo-opt').forEach(function (el) {
     el.addEventListener('click', function () {
-      document.querySelectorAll('.tipo-opt').forEach(function (x) { x.classList.remove('on'); });
+      document.querySelectorAll('.tipo-opt').forEach(function (option) { option.classList.remove('on'); });
       el.classList.add('on');
       draft.tipo = el.dataset.tipo;
       document.getElementById('mErr').className = 'err';
@@ -543,6 +620,42 @@
   document.getElementById('mVal').addEventListener('change', previewVal);
   document.getElementById('mVal').addEventListener('input', previewVal);
   document.getElementById('mSave').addEventListener('click', saveItem);
+  document.getElementById('bazarType').addEventListener('change', function () {
+    var showSize = this.value === 'Roupas';
+    document.getElementById('bazarSizeField').style.display = showSize ? '' : 'none';
+    if (!showSize) document.getElementById('bazarSize').value = '';
+  });
+  document.getElementById('bazarForm').addEventListener('submit', saveBazarItem);
+  document.getElementById('bazarCancel').addEventListener('click', resetBazarForm);
+  document.getElementById('bazarTable').addEventListener('click', function (event) {
+    var button = event.target.closest ? event.target.closest('[data-bazar-act]') : null;
+    if (!button) return;
+    var item = bazarItems.filter(function (entry) { return entry.id === button.dataset.id; })[0];
+    if (!item) return;
+    if (button.dataset.bazarAct === 'edit') {
+      bazarEditId = item.id;
+      document.getElementById('bazarName').value = item.nome;
+      document.getElementById('bazarType').value = item.tipo;
+      document.getElementById('bazarQty').value = item.qtd;
+      document.getElementById('bazarSize').value = item.size || '';
+      document.getElementById('bazarSizeField').style.display = item.tipo === 'Roupas' ? '' : 'none';
+      document.getElementById('bazarSave').textContent = 'Salvar alterações';
+      document.getElementById('bazarCancel').style.display = '';
+      document.getElementById('bazarName').focus();
+    } else if (button.dataset.bazarAct === 'done' || button.dataset.bazarAct === 'undo') {
+      item.baixa = button.dataset.bazarAct === 'done';
+      window.DonationBackend.saveBazarItems(bazarItems);
+      renderBazar();
+      toast(item.baixa ? 'Baixa registrada para ' + item.nome : item.nome + ' voltou ao bazar');
+    } else if (button.dataset.bazarAct === 'del' &&
+        confirm('Excluir "' + item.nome + '" do bazar?\\n\\nEsta ação não pode ser desfeita.')) {
+      bazarItems = bazarItems.filter(function (entry) { return entry.id !== item.id; });
+      window.DonationBackend.saveBazarItems(bazarItems);
+      if (bazarEditId === item.id) resetBazarForm();
+      renderBazar();
+      toast('Item removido do bazar', true);
+    }
+  });
 
   ['f1Tipo', 'f1Val', 'f1Busca'].forEach(function (id) {
     var el = document.getElementById(id);
@@ -688,6 +801,7 @@
     });
     window.DonationBackend.start({
       onItems: function (records) { items = records; renderAll(); },
+      onBazarItems: function (records) { bazarItems = records; renderBazar(); },
       onGate: gate,
       onError: function (message) { toast(message, true); }
     });
@@ -701,5 +815,4 @@
     setTimeout(function () {
       [pie, line, bar].forEach(function (c) { if (c) { c.resize(); c.update('none'); } });
     }, 120);
-  });
-})();
+  });})();
