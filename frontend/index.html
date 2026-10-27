@@ -18,6 +18,9 @@
     <button class="tab-btn" data-tab="t5"><span class="nav-icon">◉</span>Configurações de perfil</button>
     <button class="tab-btn" data-tab="t6"><span class="nav-icon">⚙</span>Configurações do sistema</button>
   </nav>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false">
+    <span class="theme-icon" aria-hidden="true">☾</span><span id="themeToggleLabel">Ativar modo escuro</span>
+  </button>
   <div class="sidebar-user">
     <div class="user-avatar" id="userAvatar">?</div>
     <div class="user-summary"><strong id="sidebarUserName">Perfil</strong><span id="sidebarUserEmail"></span></div>
@@ -67,24 +70,18 @@
 
 <!-- ============ TAB 1 ============ -->
 <section class="tab-panel active" id="t1">
+  <div class="dashboard-welcome">
+    <div><span class="eyebrow">PAINEL DE DOAÇÕES</span>
+      <h2>Organize as doações com facilidade</h2>
+      <p>Acompanhe o que chegou, cuide dos prazos e mantenha tudo em um só lugar.</p>
+      <p class="welcome-reminder"><strong>Lembrete:</strong> informe a validade ao cadastrar alimentos, itens de higiene e remédios.</p></div>
+    <button class="add-btn" id="btnAdd"><span aria-hidden="true">＋</span> Nova arrecadação</button>
+  </div>
   <div class="kpis">
     <div class="kpi"><div class="k" id="k1">0</div><div class="l">Itens em estoque</div></div>
     <div class="kpi green"><div class="k" id="k2">0</div><div class="l">Dentro da validade</div></div>
     <div class="kpi yellow"><div class="k" id="k3">0</div><div class="l">Vencendo em 30 dias</div></div>
     <div class="kpi red"><div class="k" id="k4">0</div><div class="l">Vencidos</div></div>
-  </div>
-
-  <div class="col-section">
-    <div class="col-header" data-target="b-add"><div><h2>Nova arrecadação</h2></div>
-      <span class="collapse-toggle"><span class="col-state">Ocultar</span>
-      <span class="collapse-icon">&#9660;</span></span></div>
-    <div class="col-body" id="b-add">
-      <div class="add-bar">
-        <button class="add-btn" id="btnAdd">Nova arrecadação</button>
-        <span class="add-hint">Informe tipo, quantidade e data. O item entra na tabela e fica salvo para todos os usuários.</span>
-      </div>
-      <p class="note"><strong>Como funciona:</strong> informe a validade de <strong>Alimentos</strong>, <strong>Higiene</strong> e <strong>Remédios</strong> para acompanhar vencimentos; para <strong>Roupas</strong>, escolha o tamanho.</p>
-    </div>
   </div>
 
   <div class="col-section">

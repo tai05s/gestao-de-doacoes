@@ -11,8 +11,47 @@
   var editId = null;
   var bazarEditId = null;
   var draft = { tipo: '', size: '' };
+  var THEME_KEY = 'gestao_doacoes_theme';
 
   /* ---------------- utils ---------------- */
+  function isDarkTheme() { return document.documentElement.dataset.theme === 'dark'; }
+  function cssColor(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function setTheme(theme) {
+    var dark = theme === 'dark';
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
+    var button = document.getElementById('themeToggle');
+    button.setAttribute('aria-pressed', dark ? 'true' : 'false');
+    document.getElementById('themeToggleLabel').textContent = dark ? 'Ativar modo claro' : 'Ativar modo escuro';
+    button.querySelector('.theme-icon').textContent = dark ? '☀' : '☾';
+    button.setAttribute('aria-label', dark ? 'Ativar modo claro' : 'Ativar modo escuro');
+    Chart.defaults.color = cssColor('--ink2');
+    [pie, line, bar].forEach(function (chart) {
+      if (!chart) return;
+      if (chart.options.scales) {
+        Object.keys(chart.options.scales).forEach(function (key) {
+          var scale = chart.options.scales[key];
+          scale.ticks.color = cssColor('--ink2');
+          if (scale.grid && scale.grid.display !== false) scale.grid.color = cssColor('--line');
+        });
+      }
+      if (chart === pie) chart.data.datasets[0].borderColor = cssColor('--paper');
+      if (chart === line) {
+        chart.data.datasets[0].pointBorderColor = cssColor('--paper');
+        chart.options.scales.y.grid.color = cssColor('--line');
+      }
+      chart.update('none');
+    });
+  }
+  function initTheme() {
+    var savedTheme = localStorage.getItem(THEME_KEY);
+    setTheme(savedTheme === 'dark' ? 'dark' : 'light');
+    document.getElementById('themeToggle').addEventListener('click', function () {
+      setTheme(isDarkTheme() ? 'light' : 'dark');
+      renderAll();
+      renderBazar();
+    });
+  }
   function esc(t) {
     return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
@@ -37,9 +76,12 @@
   function vstat(it) {
     if (['Alimentos', 'Higiene', 'Remédios'].indexOf(it.tipo) < 0 || !it.validade) return null;
     var n = dias(it.validade);
-    if (n < 0) return { k: 'exp', cor: '#B3261E', txt: 'Vencido h\u00e1 ' + Math.abs(n) + 'd' };
-    if (n <= 30) return { k: 'soon', cor: '#B8860B', txt: 'Vence em ' + n + 'd' };
-    return { k: 'ok', cor: '#2F7D4F', txt: 'Vence em ' + n + 'd' };
+    var cores = isDarkTheme()
+      ? { exp: '#FF827B', soon: '#E0B94F', ok: '#75C995' }
+      : { exp: '#B3261E', soon: '#B8860B', ok: '#2F7D4F' };
+    if (n < 0) return { k: 'exp', cor: cores.exp, txt: 'Vencido h\u00e1 ' + Math.abs(n) + 'd' };
+    if (n <= 30) return { k: 'soon', cor: cores.soon, txt: 'Vence em ' + n + 'd' };
+    return { k: 'ok', cor: cores.ok, txt: 'Vence em ' + n + 'd' };
   }
   function qtdTxt(it) {
     var n = Number(it.qtd) || 0;
@@ -294,7 +336,7 @@
 
   function baseOpts() {
     Chart.defaults.font.family = "'Public Sans', Arial, sans-serif";
-    Chart.defaults.color = '#4B5651';
+    Chart.defaults.color = cssColor('--ink2');
     return {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: {} }
@@ -311,11 +353,11 @@
       var cy = (ch.chartArea.top + ch.chartArea.bottom) / 2;
       ctx.save();
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#4B5651'; ctx.font = '700 12px Public Sans, Arial, sans-serif';
+      ctx.fillStyle = cssColor('--ink2'); ctx.font = '700 12px Public Sans, Arial, sans-serif';
       ctx.fillText('Total', cx, cy - 20);
-      ctx.fillStyle = '#1F2623'; ctx.font = '800 34px Public Sans, Arial, sans-serif';
+      ctx.fillStyle = cssColor('--ink'); ctx.font = '800 34px Public Sans, Arial, sans-serif';
       ctx.fillText(tot, cx, cy + 5);
-      ctx.fillStyle = '#4B5651'; ctx.font = '600 10px Public Sans, Arial, sans-serif';
+      ctx.fillStyle = cssColor('--ink2'); ctx.font = '600 10px Public Sans, Arial, sans-serif';
       ctx.fillText('itens', cx, cy + 27);
       ctx.restore();
       if (!tot) return;
@@ -351,7 +393,7 @@
           labels: TP,
           datasets: [{ data: TP.map(function (t) { return cnt[t]; }),
             backgroundColor: TP.map(function (t) { return TIPO_COR[t]; }),
-            borderWidth: 2, borderColor: '#fff' }]
+            borderWidth: 2, borderColor: cssColor('--paper') }]
         },
         options: (function () {
           var o = baseOpts(); o.cutout = '55%'; o.layout = { padding: 12 };
@@ -389,7 +431,7 @@
         data: { labels: labs, datasets: [{
           data: vals, borderColor: '#3D5A80', backgroundColor: 'rgba(61,90,128,.10)',
           borderWidth: 2, fill: true, tension: .32,
-          pointBackgroundColor: '#3D5A80', pointBorderColor: '#fff', pointBorderWidth: 2,
+          pointBackgroundColor: '#3D5A80', pointBorderColor: cssColor('--paper'), pointBorderWidth: 2,
           pointRadius: 4, pointHoverRadius: 6
         }] },
         options: (function () {
@@ -398,7 +440,7 @@
           o.plugins.tooltip = { callbacks: { label: function (c) { return c.parsed.y + ' arrecada\u00e7\u00f5es'; } } };
           o.scales = {
             x: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' } } },
-            y: { beginAtZero: true, grid: { color: '#ECEEEB' },
+            y: { beginAtZero: true, grid: { color: cssColor('--line') },
                  ticks: { font: { size: 11 }, precision: 0 } }
           };
           return o;
@@ -411,7 +453,7 @@
               var v = ch.data.datasets[0].data[i];
               ctx.save();
               ctx.font = '800 11.5px Public Sans, Arial, sans-serif';
-              ctx.textAlign = 'center'; ctx.fillStyle = '#1F2623';
+              ctx.textAlign = 'center'; ctx.fillStyle = cssColor('--ink');
               ctx.fillText(v, p.x, p.y - 12);
               ctx.restore();
             });
@@ -449,7 +491,7 @@
               return n < 0 ? ('Vencido h\u00e1 ' + Math.abs(n) + ' dias') : ('Faltam ' + n + ' dias');
             } } };
             o.scales = {
-              x: { grid: { color: '#ECEEEB' }, ticks: { font: { size: 11 },
+              x: { grid: { color: cssColor('--line') }, ticks: { font: { size: 11 },
                    callback: function (v) { return v + 'd'; } } },
               y: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' }, autoSkip: false } }
             };
@@ -912,6 +954,7 @@
   }
 
   /* ---------------- start ---------------- */
+  initTheme();
   load();
   renderAll();
   initCloud();
