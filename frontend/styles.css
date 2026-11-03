@@ -152,7 +152,7 @@ table.dt{width:100%;border-collapse:collapse;font-size:13.5px;}
 .bazar-form{display:grid;grid-template-columns:minmax(200px,2fr) minmax(130px,1fr) minmax(110px,.7fr) minmax(120px,.8fr) auto;gap:14px;align-items:end;margin-bottom:20px;}
 .bazar-form .fld{margin:0;}
 .bazar-actions{display:flex;gap:8px;align-items:center;padding-bottom:1px;}
-.tipo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.tipo-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
 .tipo-opt,.sz-opt{border:1px solid var(--ctl);border-radius:7px;text-align:center;cursor:pointer;background:var(--paper);
   font-weight:600;color:var(--ink);transition:background .15s ease,border-color .15s ease,color .15s ease;}
 .tipo-opt{padding:12px 8px;}

@@ -4,7 +4,7 @@
 
   var KEY = 'gestao_doacoes_v1';
   var MES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-  var TIPO_COR = { Alimentos: '#3D5A80', Roupas: '#9A6B2F', Higiene: '#7A4E7E', Remédios: '#A0443D', Objetos: '#52665A' };
+  var TIPO_COR = { Alimentos: '#3D5A80', Roupas: '#9A6B2F', Higiene: '#7A4E7E', Remédios: '#A0443D', Outros: '#52665A', Objetos: '#52665A' };
 
   var items = [];
   var bazarItems = [];
@@ -380,8 +380,8 @@
   };
 
   function renderCharts() {
-    var TP = ['Alimentos', 'Roupas', 'Higiene', 'Remédios'];
-    var cnt = { Alimentos: 0, Roupas: 0, Higiene: 0, Remédios: 0 };
+    var TP = ['Alimentos', 'Roupas', 'Higiene', 'Remédios', 'Outros'];
+    var cnt = { Alimentos: 0, Roupas: 0, Higiene: 0, Remédios: 0, Outros: 0 };
     items.forEach(function (i) { if (cnt[i.tipo] != null) cnt[i.tipo]++; });
     var tot = items.length || 1;
 
