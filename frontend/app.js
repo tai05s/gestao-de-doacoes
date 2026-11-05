@@ -286,11 +286,9 @@
     document.querySelector('#tbl1 tbody').innerHTML = list.map(function (i) { return rowHtml(i, false); }).join('');
     document.getElementById('e1').style.display = list.length ? 'none' : '';
 
-    var kg = 0, un = 0;
-    list.forEach(function (i) { if (i.tipo === 'Alimentos') kg += +i.qtd || 0; else un += +i.qtd || 0; });
-    document.getElementById('ft1n').textContent = list.length + ' itens';
+    var totalItens = list.reduce(function (total, item) { return total + (Number(item.qtd) || 0); }, 0);
     document.getElementById('ft1q').textContent =
-      (kg ? kg.toFixed(kg % 1 ? 2 : 0).replace('.', ',') + ' kg' : '') + (kg && un ? '  +  ' : '') + (un ? un + ' un' : '') || '\u2014';
+      totalItens.toFixed(totalItens % 1 ? 2 : 0).replace('.', ',') + ' itens';
     var ex = list.filter(function (i) { var s = vstat(i); return s && s.k === 'exp'; }).length;
     var so = list.filter(function (i) { var s = vstat(i); return s && s.k === 'soon'; }).length;
     document.getElementById('ft1i').textContent = ex || so
