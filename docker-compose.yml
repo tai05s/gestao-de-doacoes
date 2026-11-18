@@ -1,0 +1,67 @@
+services:
+  firebase:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.firebase-emulator
+    stop_signal: SIGINT
+    stop_grace_period: 30s
+    ports:
+      - "127.0.0.1:4000:4000"
+      - "127.0.0.1:9099:9099"
+    volumes:
+      - firestore-data:/data
+      - firebase-cache:/root/.cache/firebase/emulators
+    healthcheck:
+      test: ["CMD", "node", "docker/firebase-healthcheck.js"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      FIREBASE_ADMIN_PROJECT_ID: demo-gestao-doacoes
+      FIRESTORE_EMULATOR_HOST: firebase:8080
+      FIREBASE_AUTH_EMULATOR_HOST: firebase:9099
+      API_ALLOWED_EMAILS: ${API_ALLOWED_EMAILS:-demo@example.com}
+      API_ALLOWED_ORIGINS: http://localhost:8080
+      API_PORT: 3000
+    depends_on:
+      firebase:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+      args:
+        VITE_FIREBASE_API_KEY: demo-api-key
+        VITE_FIREBASE_AUTH_DOMAIN: demo-gestao-doacoes.firebaseapp.com
+        VITE_FIREBASE_PROJECT_ID: demo-gestao-doacoes
+        VITE_FIREBASE_APP_ID: demo-app-id
+        VITE_FIREBASE_LOGIN_EMAIL: ${VITE_FIREBASE_LOGIN_EMAIL:-demo@example.com}
+        VITE_FIREBASE_AUTH_EMULATOR_URL: http://localhost:9099
+        VITE_API_BASE_URL: /api
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  firestore-data:
+  firebase-cache:

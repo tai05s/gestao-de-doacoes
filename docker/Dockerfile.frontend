@@ -1,0 +1,32 @@
+FROM node:24-alpine AS build
+
+WORKDIR /workspace/MeusProjetos/meu-app-react
+COPY MeusProjetos/meu-app-react/package.json MeusProjetos/meu-app-react/package-lock.json ./
+RUN npm ci
+
+COPY frontend /workspace/frontend
+COPY backend/firebase-config.js /workspace/backend/firebase-config.js
+COPY backend/firebase.js /workspace/backend/firebase.js
+COPY MeusProjetos/meu-app-react/vite.config.js ./
+
+ARG VITE_FIREBASE_API_KEY
+ARG VITE_FIREBASE_AUTH_DOMAIN
+ARG VITE_FIREBASE_PROJECT_ID
+ARG VITE_FIREBASE_APP_ID
+ARG VITE_FIREBASE_LOGIN_EMAIL
+ARG VITE_FIREBASE_AUTH_EMULATOR_URL
+ARG VITE_API_BASE_URL=/api
+ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY \
+    VITE_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN \
+    VITE_FIREBASE_PROJECT_ID=$VITE_FIREBASE_PROJECT_ID \
+    VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID \
+    VITE_FIREBASE_LOGIN_EMAIL=$VITE_FIREBASE_LOGIN_EMAIL \
+    VITE_FIREBASE_AUTH_EMULATOR_URL=$VITE_FIREBASE_AUTH_EMULATOR_URL \
+    VITE_API_BASE_URL=$VITE_API_BASE_URL
+
+RUN npm run build
+
+FROM nginx:1.28-alpine
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /workspace/MeusProjetos/meu-app-react/dist /usr/share/nginx/html
+EXPOSE 80

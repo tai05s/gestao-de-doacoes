@@ -11,10 +11,14 @@ if (!projectId) {
   throw new Error('Defina FIREBASE_ADMIN_PROJECT_ID no arquivo .env da raiz.');
 }
 
-initializeApp({
-  credential: applicationDefault(),
-  projectId,
-});
+if (process.env.FIRESTORE_EMULATOR_HOST) {
+  initializeApp({ projectId });
+} else {
+  initializeApp({
+    credential: applicationDefault(),
+    projectId,
+  });
+}
 
 const { default: app } = await import('./app.js');
 const port = Number(process.env.API_PORT) || 3000;

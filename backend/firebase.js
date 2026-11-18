@@ -171,6 +171,9 @@
     if (global.firebase.apps.length) global.firebase.app();
     else global.firebase.initializeApp(config);
     auth = global.firebase.auth();
+    if (global.FIREBASE_AUTH_EMULATOR_URL) {
+      auth.useEmulator(global.FIREBASE_AUTH_EMULATOR_URL);
+    }
     auth.onAuthStateChanged(function (user) {
       if (user) {
         callbacks.onProfile(user);

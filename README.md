@@ -32,6 +32,18 @@ npm run dev
 
 O Vite abre a aplicação em `http://localhost:5173/frontend/` e encaminha `/api` para o servidor na porta 3000. A autenticação requer internet, Firebase configurado e `localhost` autorizado no Firebase Authentication.
 
+## Executar com Docker Compose
+
+Com Docker Desktop e Docker Compose instalados, inicie o frontend, a API, o Firebase Authentication Emulator e o Firestore Emulator:
+
+```bash
+docker compose up --build
+```
+
+Abra `http://localhost:8080` para usar a aplicação e `http://localhost:4000` para acessar a interface dos emuladores. No Emulator UI, crie um usuário de Authentication com o e-mail `demo@example.com` (ou com o endereço definido em `VITE_FIREBASE_LOGIN_EMAIL`); a lista de autorização da API deve conter esse mesmo e-mail em `API_ALLOWED_EMAILS`. Use a senha escolhida ao criar a conta para entrar no sistema. O Firestore começa vazio e seus dados são mantidos no volume Docker `firestore-data` entre reinicializações.
+
+Para autorizar outro usuário, defina `VITE_FIREBASE_LOGIN_EMAIL` e `API_ALLOWED_EMAILS` no `.env` da raiz antes de subir o Compose e crie essa conta no Emulator UI. Esses containers usam emuladores locais e credenciais de demonstração: não os exponha na rede nem os use como configuração de produção. `docker compose down` para os serviços sem apagar o banco; para apagar também os dados persistidos, execute `docker compose down -v`.
+
 Para gerar e visualizar uma versão de produção:
 
 ```bash
