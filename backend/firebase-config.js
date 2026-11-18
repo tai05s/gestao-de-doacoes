@@ -11,4 +11,5 @@
     appId: env.VITE_FIREBASE_APP_ID
   };
   global.FIREBASE_LOGIN_EMAIL = env.VITE_FIREBASE_LOGIN_EMAIL || '';
+  global.DONATION_API_URL = env.VITE_API_BASE_URL || '/api';
 })(window);
