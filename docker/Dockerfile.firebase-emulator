@@ -1,0 +1,15 @@
+FROM node:22-trixie-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openjdk-21-jre-headless \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN npm install --global firebase-tools@14.12.1
+WORKDIR /workspace
+COPY firebase.json firestore.rules ./
+COPY docker/firebase-healthcheck.js ./docker/firebase-healthcheck.js
+RUN mkdir -p /data /root/.cache/firebase/emulators
+
+EXPOSE 4000 8080 9099
+ENTRYPOINT ["firebase"]
+CMD ["emulators:start", "--only", "auth,firestore", "--project", "demo-gestao-doacoes", "--import=/data/emulator-state", "--export-on-exit=/data/emulator-state"]
