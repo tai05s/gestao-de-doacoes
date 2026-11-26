@@ -12,31 +12,46 @@
     syncState = null;
   }
 
+  function invalidResponseError(response) {
+    var status = response.status ? ' (HTTP ' + response.status + ')' : '';
+    return new Error('O servidor retornou uma resposta inválida' + status +
+      '. Verifique a URL da API e se o servidor está disponível.');
+  }
+
   function request(path, options) {
     var user = auth && auth.currentUser;
     if (!user) return Promise.reject(new Error('Entre no sistema para continuar.'));
 
+    var config = options || {};
+    var method = config.method || 'GET';
     return user.getIdToken().then(function (token) {
-      var config = options || {};
       var headers = { Authorization: 'Bearer ' + token };
       if (config.body) headers['Content-Type'] = 'application/json';
       return fetch((global.DONATION_API_URL || '/api') + path, {
-        method: config.method || 'GET',
+        method: method,
         headers: headers,
         body: config.body || undefined
       });
     }).then(function (response) {
-      return response.json().catch(function () {
-        throw new Error('O servidor retornou uma resposta inválida.');
-      }).then(function (payload) {
-        if (!payload || typeof payload !== 'object') {
-          throw new Error('O servidor retornou uma resposta inválida.');
+      return response.text().then(function (body) {
+        var payload;
+        try {
+          payload = JSON.parse(body);
+        } catch (error) {
+          throw invalidResponseError(response);
+        }
+        if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+          throw invalidResponseError(response);
         }
         if (!response.ok) {
           var error = new Error(payload.error && payload.error.message
             ? payload.error.message : 'Não foi possível concluir a solicitação.');
           error.status = response.status;
           throw error;
+        }
+        if ((method === 'GET' && !Array.isArray(payload.items)) ||
+            (method === 'PATCH' && payload.ok !== true)) {
+          throw invalidResponseError(response);
         }
         return payload;
       });
